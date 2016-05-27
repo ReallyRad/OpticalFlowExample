@@ -2,11 +2,13 @@ import gab.opencv.*;
 import processing.video.*;
 
 OpenCV opencv;
+Capture cam;
+PImage camImage;
 Movie video;
 
 // resolution
-int videoWidth = 256;
-int videoHeight = 256;
+int videoWidth = 640;
+int videoHeight = 480;
 int levelOfDetails = 2;
 
 // shader
@@ -31,6 +33,24 @@ void setup ()
   strokeWeight(1);
   textSize(16);
 
+  //camera
+  String[] cameras = Capture.list();
+  
+  if (cameras.length == 0) {
+    println("There are no cameras available for capture.");
+    exit();
+  } else {
+    println("Available cameras:");
+    for (int i = 0; i < cameras.length; i++) {
+      println(cameras[i]);
+    }
+  }
+    
+  cam = new Capture(this, cameras[0]);
+  cam.start();     
+  camImage = new PImage();
+
+  
   // video
   video = new Movie(this, "videos/sample.avi");
   video.loop();
@@ -82,9 +102,16 @@ void draw()
 {
   // clear
   background(0);
+  
+  //read from camera
+  if (cam.available() == true) {
+    cam.read();
+  }
+
+  camImage.loadPixels(cam.getPixels());
 
   // this is where the openCV magic happen
-  opencv.loadImage(video);
+  opencv.loadImage(camImage);
   opencv.calculateOpticalFlow();
 
   /////////////////////////
@@ -157,7 +184,7 @@ void draw()
   {
     // refill buffer with video
     bufferWrite.resetShader();
-    bufferWrite.image(video, 0, 0, width, height);
+    bufferWrite.image(camImage, 0, 0, width, height);
   }
   else
   {
